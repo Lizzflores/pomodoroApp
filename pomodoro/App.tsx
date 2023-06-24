@@ -1,118 +1,72 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { useEffect, useState } from "react";
+import { StyleSheet, View, StatusBar} from "react-native";
+import { TimerCountDownDisplay } from "./TimerCountDownDisplay";
+import { TimerModeDisplay, TimerModes } from "./TimerModeDisplay";
+import { TimerToggleButton } from "./TimerToggleButton";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const FOCUS_TIME_MINUTES = 25 * 60 * 1000;
+const BREAK_TIME_MINUTES = 5 * 60 * 1000;
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+export default function App() {
+  const [timerCount, setTimerCount] = useState<number>(FOCUS_TIME_MINUTES);
+  const [intervalId, setIntervalId] = useState<number | null>(null);
+  const [timerMode, setTimerMode] = useState<TimerModes>("Focus");
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  useEffect(() => {
+    if (timerCount === 0) {
+      if (timerMode === "Focus") {
+        setTimerMode("Break");
+        setTimerCount(BREAK_TIME_MINUTES);
+      } else {
+        setTimerMode("Focus");
+        setTimerCount(FOCUS_TIME_MINUTES);
+      }
+      stopCountDown();
+    }
+  }, [timerCount]);
+
+  const startCountDown = () => {
+    setIsTimerRunning(true);
+    const id = setInterval(() => setTimerCount((prev) => prev - 1000), 1000);
+    setIntervalId(id);
+  };
+
+  const stopCountDown = () => {
+    setIsTimerRunning(false);
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+    setIntervalId(null);
+  };
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View
+      style={{
+        ...styles.container,
+        ...{ backgroundColor: timerMode === "Break" ? "#2a9d8f" : "#d95550" },
+      }}
+    >
+ <StatusBar translucent={true}/>
+      <TimerModeDisplay timerMode={timerMode} />
+
+      <TimerToggleButton
+        startCountDownHandler={startCountDown}
+        isTimerRunning={isTimerRunning}
+        setIsTimerRunning={setIsTimerRunning}
+        stopCountDownHandler={stopCountDown}
+      />
+      <TimerCountDownDisplay countDownDate={new Date(timerCount)} />
     </View>
   );
 }
 
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    backgroundColor: "#d95550",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
-
-export default App;
